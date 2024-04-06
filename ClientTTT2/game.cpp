@@ -9,6 +9,41 @@
 #include <QMovie>
 #include <QThread>
 #include <QMediaPlayer>
+#include <QDataStream>
+
+void GAME::sendRegistration(QTcpSocket* socket, const QString& username, const QString& password) {     //Registeration
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_3);
+    out << QString("register") << username << password;
+    socket->write(data);
+}
+
+void GAME::sendLogin(QTcpSocket* socket, const QString& username, const QString& password) {    //Login
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_3);
+    out << QString("login") << username << password;
+    socket->write(data);
+}
+
+void GAME::handleServerResponse(QTcpSocket* socket) {         //Loop
+    QByteArray data = socket->readAll();
+    QString response = QString::fromUtf8(data);
+
+    if (response.contains("Registration successful")) {
+        qDebug() << "Registration Success!";
+    }
+    else if (response.contains("Registration failed")) {
+        qDebug() << "Registration Failure!";
+    }
+    else if (response.contains("Login successful")) {
+        qDebug() << "Login Success!";
+    }
+    else if (response.contains("Login failed")) {
+        qDebug() << "Login Failure!";
+    }
+}
 
 GAME::GAME()
 {

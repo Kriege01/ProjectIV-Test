@@ -3,6 +3,55 @@
 #include <iostream>
 #include <algorithm>
 #include "gamelogic.h"
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+// Helper function to split strings by a delimiter
+std::vector<std::string> split(const std::string& s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::istringstream tokenStream(s);
+    std::string token;
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Function to register a new user
+bool registerUser(const std::string& username, const std::string& password) {
+    std::ifstream in("users.txt");
+    std::string line;
+    while (std::getline(in, line)) {
+        auto tokens = split(line, ':');
+        if (tokens[0] == username) {
+            return false;  // Username already exists
+        }
+    }
+    in.close();
+
+    std::ofstream out("users.txt", std::ios::app);
+    if (!out.is_open()) {
+        return false;
+    }
+    out << username << ":" << password << std::endl;
+    out.close();
+    return true;
+}
+
+// Function to check login credentials
+bool loginUser(const std::string& username, const std::string& password) {
+    std::ifstream in("users.txt");
+    std::string line;
+    while (std::getline(in, line)) {
+        auto tokens = split(line, ':');
+        if (tokens.size() == 2 && tokens[0] == username && tokens[1] == password) {
+            return true;
+        }
+    }
+    return false;
+}
+
 Server::Server()
 {
     listen(QHostAddress::Any, 2323);
@@ -118,6 +167,29 @@ void Server::slotReadyRead()                                                    
 
     QString action;
     in >> action;
+
+    if (action == "register" || action == "login") {
+        QString username, password;
+        in >> username >> password;
+
+        if (action == "register") {
+            if (registerUser(username.toStdString(), password.toStdString())) {
+                socket->write("Registration successful\n");
+            }
+            else {
+                socket->write("Registration failed: Username already exists\n");
+            }
+        }
+        else if (action == "login") {
+            if (loginUser(username.toStdString(), password.toStdString())) {
+                socket->write("Login successful\n");
+            }
+            else {
+                socket->write("Login failed: Incorrect username or password\n");
+            }
+        }
+        return;
+    }
 
     qDebug() << action << sockets.size();
 

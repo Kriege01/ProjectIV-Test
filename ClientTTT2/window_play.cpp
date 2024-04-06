@@ -61,6 +61,7 @@ window_play::window_play(QWidget *parent) : QDialog(parent)
     // Connect signals and slots for the socket
     connect(socket, &QTcpSocket::readyRead, this, &window_play::slotReadyRead);
     connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
+    connect(socket, &QTcpSocket::readyRead, this, &GAME::handleServerResponse);
 
     // Initialize player permission and UI elements
     isPlayerAllowedToMove = false;
